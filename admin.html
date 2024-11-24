@@ -88,36 +88,40 @@
             tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat yüklənir...</td></tr>';
 
             const usersRef = db.ref("users");
-            usersRef.once("value")
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        tableBody.innerHTML = ""; // Mövcud məlumatları təmizlə
+            usersRef.once("value").then((snapshot) => {
+                if (snapshot.exists()) {
+                    const tableBody = document.getElementById("data-table");
+                    tableBody.innerHTML = ""; // Cədvəli təmizlə
 
-                        snapshot.forEach((childSnapshot) => {
-                            const ip = childSnapshot.key; // IP düyün adı
-                            const data = childSnapshot.val(); // Məlumatlar
+                    snapshot.forEach((childSnapshot) => {
+                        const ip = childSnapshot.key; // IP adresi düyün adı kimi götür
+                        const data = childSnapshot.val(); // Düyündən məlumatları al
 
-                            // Cədvəl üçün sətir yaradılır
-                            const row = `
-                                <tr>
-                                    <td>${ip}</td>
-                                    <td>${data.city || "Unknown"}</td>
-                                    <td>${data.country || "Unknown"}</td>
-                                    <td>${data.cores || "N/A"}</td>
-                                    <td>${data.language || "Unknown"}</td>
-                                    <td>${data.historyLength || 0}</td>
-                                </tr>
-                            `;
-                            tableBody.innerHTML += row;
-                        });
-                    } else {
-                        tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat tapılmadı.</td></tr>';
-                    }
-                })
-                .catch((error) => {
-                    console.error("Məlumat çəkilmədi:", error);
-                    tableBody.innerHTML = '<tr><td colspan="6" class="message">Xəta baş verdi.</td></tr>';
-                });
+                        // Məlumatların oxunuşu
+                        const city = data.city || "Unknown";
+                        const region = data.region || "Unknown";
+                        const country = data.country || "Unknown";
+                        const timestamp = data.timestamp || "Unknown";
+
+                        // Cədvələ sətir əlavə et
+                        const row = `
+                <tr>
+                    <td>${ip}</td>
+                    <td>${city}</td>
+                    <td>${region}</td>
+                    <td>${country}</td>
+                    <td>${timestamp}</td>
+                    <td>${data.language || "Unknown"}</td>
+                </tr>
+            `;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    document.getElementById("data-table").innerHTML = '<tr><td colspan="6" class="message">Məlumat tapılmadı.</td></tr>';
+                }
+            }).catch((error) => {
+                console.error("Məlumat çəkilmədi:", error);
+            });
         }
 
         window.onload = fetchData;
