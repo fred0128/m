@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Data Table</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .counter {
+            font-weight: bold;
+        }
+
+        #countdown {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .admin-refresh-box {
+            display: flex;
+            width: 200px;
+            height: 50px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .info-box td:nth-child(6) {
+            width: 200px;
+        }
+
+        .info-box td:nth-child(6) details {
+            width: 300px;
+        }
+
+        .info-box td:nth-child(6) details pre {
+            word-wrap: break-word;
+            text-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-header">
+        <h1>Firebase-dən Məlumatlar</h1>
+    </div>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Şəhər</th>
+                <th>Region</th>
+                <th>Ölkə</th>
+                <th>Zaman Möhürü</th>
+                <th>Əlavə Məlumat</th>
+            </tr>
+        </thead>
+        <tbody class="info-box">
+
+        </tbody>
+    </table>
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUXBPUJKm3UIXBy13RPqlUGe0wdbf7yHI",
+            authDomain: "user-info-thefeerid.firebaseapp.com",
+            databaseURL: "https://user-info-thefeerid-default-rtdb.firebaseio.com",
+            projectId: "user-info-thefeerid",
+            storageBucket: "user-info-thefeerid.firebasestorage.app",
+            messagingSenderId: "691157814373",
+            appId: "1:691157814373:web:60524a462fc02bbc9a4a8c",
+            measurementId: "G-7DG0LTNSDL"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let refreshInterval;
+        let refreshEnabled = true;
+        let countdownInterval;
+        let countdownTime = 4.00;
+
+        function fetchAndDisplayData() {
+            const tableBody = document.querySelector("#data-table tbody");
+            tableBody.innerHTML = "";
+
+            const usersRef = db.ref("users");
+            usersRef.on("value", (snapshot) => {
+                const data = snapshot.val();
+
+                if (data) {
+                    Object.keys(data).forEach(ip => {
+                        const userEntries = data[ip];
+
+                        Object.keys(userEntries).forEach(entryKey => {
+                            const userInfo = userEntries[entryKey];
+
+                            const row = document.createElement("tr");
+
+                            row.innerHTML = `
+                                <td>${ip.replace(/_/g, ".")}</td>
+                                <td>${userInfo.city || "Bilinmir"}</td>
+                                <td>${userInfo.region || "Bilinmir"}</td>
+                                <td>${userInfo.country || "Bilinmir"}</td>
+                                <td>${userInfo.timestamp || "Bilinmir"}</td>
+                                <td>
+                                    <details>
+                                        <summary>Ətraflı</summary>
+                                        <pre>${JSON.stringify(userInfo, null, 2)}</pre>
+                                    </details>
+                                </td>
+                            `;
+
+                            tableBody.appendChild(row);
+                        });
+                    });
+                } else {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td colspan="6">Məlumat tapılmadı.</td>`;
+                    tableBody.appendChild(row);
+                }
+            });
+        }
+
+        window.onload = function () {
+            fetchAndDisplayData();
+        };
+    </script>
+</body>
+
+</html>

