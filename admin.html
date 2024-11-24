@@ -85,33 +85,44 @@
 
         function fetchData() {
             const tableBody = document.getElementById("data-table");
-            tableBody.innerHTML = "";
+            tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat yüklənir...</td></tr>';
 
             const usersRef = db.ref("users");
-            usersRef.once("value").then((snapshot) => {
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const data = childSnapshot.val();
-                        const row = `
-                            <tr>
-                                <td>${data.ip || "Unknown"}</td>
-                                <td>${data.city || "Unknown"}</td>
-                                <td>${data.region || "Unknown"}</td>
-                                <td>${data.country || "Unknown"}</td>
-                                <td>${data.timestamp || "Unknown"}</td>
-                                <td>${data.extra || "No details"}</td>
-                            </tr>
-                        `;
-                        tableBody.innerHTML += row;
-                    });
-                } else {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat tapılmadı.</td></tr>';
-                }
-            });
+            usersRef.once("value")
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        tableBody.innerHTML = ""; // Mövcud məlumatları təmizlə
+
+                        snapshot.forEach((childSnapshot) => {
+                            const ip = childSnapshot.key; // IP düyün adı
+                            const data = childSnapshot.val(); // Məlumatlar
+
+                            // Cədvəl üçün sətir yaradılır
+                            const row = `
+                                <tr>
+                                    <td>${ip}</td>
+                                    <td>${data.city || "Unknown"}</td>
+                                    <td>${data.country || "Unknown"}</td>
+                                    <td>${data.cores || "N/A"}</td>
+                                    <td>${data.language || "Unknown"}</td>
+                                    <td>${data.historyLength || 0}</td>
+                                </tr>
+                            `;
+                            tableBody.innerHTML += row;
+                        });
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat tapılmadı.</td></tr>';
+                    }
+                })
+                .catch((error) => {
+                    console.error("Məlumat çəkilmədi:", error);
+                    tableBody.innerHTML = '<tr><td colspan="6" class="message">Xəta baş verdi.</td></tr>';
+                });
         }
 
         window.onload = fetchData;
     </script>
+
 </body>
 
 </html>
