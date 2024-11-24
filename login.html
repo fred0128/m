@@ -112,17 +112,6 @@
                     document.getElementById("error-message").textContent = error.message;
                 });
         });
-
-        function checkUserInDatabase(userId) {
-            const userRef = db.ref(`users/${userId}`);
-            userRef.once("value").then((snapshot) => {
-                if (snapshot.exists()) {
-                    window.location.href = "admin.html";
-                } else {
-                    document.getElementById("error-message").textContent = "Sistemdə qeydiyyat yoxdur.";
-                }
-            });
-        }
     </script>
 </body>
 
