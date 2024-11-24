@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Firebase Authentication</title>
+    <title>Admin Panel</title>
     <style>
         * {
             margin: 0;
@@ -14,109 +14,103 @@
 
         body {
             font-family: Arial, Helvetica, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
             background-color: #f4f4f4;
         }
 
-        .login-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
+        tr:hover {
+            background-color: #f1f1f1;
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #218838;
-        }
-
-        .error-message {
+        .message {
+            font-weight: bold;
             color: red;
-            text-align: center;
-            margin-top: 10px;
         }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Şifrə" required />
-        <button id="loginButton">Giriş</button>
-        <div class="error-message" id="error-message"></div>
-    </div>
+    <h1>Admin Panel</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Şəhər</th>
+                <th>Region</th>
+                <th>Ölkə</th>
+                <th>Zaman Möhürü</th>
+                <th>Ətraflı</th>
+            </tr>
+        </thead>
+        <tbody id="data-table">
+            <tr>
+                <td colspan="6" class="message">Məlumat yüklənir...</td>
+            </tr>
+        </tbody>
+    </table>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database-compat.js"></script>
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyAUXBPUJKm3UIXBy13RPqlUGe0wdbf7yHI",
-            authDomain: "user-info-thefeerid.firebaseapp.com",
-            databaseURL: "https://user-info-thefeerid-default-rtdb.firebaseio.com",
-            projectId: "user-info-thefeerid",
-            storageBucket: "user-info-thefeerid.firebasestorage.app",
-            messagingSenderId: "691157814373",
-            appId: "1:691157814373:web:60524a462fc02bbc9a4a8c",
-            measurementId: "G-7DG0LTNSDL"
+            apiKey: "API_KEY",
+            authDomain: "AUTH_DOMAIN",
+            databaseURL: "DATABASE_URL",
+            projectId: "PROJECT_ID",
+            storageBucket: "STORAGE_BUCKET",
+            messagingSenderId: "MESSAGING_SENDER_ID",
+            appId: "APP_ID",
+            measurementId: "MEASUREMENT_ID"
         };
 
-        // Firebase initialization
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        const db = firebase.database();
 
-        document.getElementById("loginButton").addEventListener("click", function () {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+        function fetchData() {
+            const tableBody = document.getElementById("data-table");
+            tableBody.innerHTML = "";
 
-            // Input validation
-            if (!email || !password) {
-                document.getElementById("error-message").textContent = "E-poçt və şifrəni doldurun.";
-                return;
-            }
+            const usersRef = db.ref("users");
+            usersRef.once("value").then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        const row = `
+                            <tr>
+                                <td>${data.ip || "Unknown"}</td>
+                                <td>${data.city || "Unknown"}</td>
+                                <td>${data.region || "Unknown"}</td>
+                                <td>${data.country || "Unknown"}</td>
+                                <td>${data.timestamp || "Unknown"}</td>
+                                <td>${data.extra || "No details"}</td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="message">Məlumat tapılmadı.</td></tr>';
+                }
+            });
+        }
 
-            // Firebase login
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Successful login
-                    const user = userCredential.user;
-                    window.location.href = "/m/home.html"; // redirect to the main page (change as needed)
-                })
-                .catch((error) => {
-                    // Error handling
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    document.getElementById("error-message").textContent = errorMessage;
-                });
-        });
+        window.onload = fetchData;
     </script>
 </body>
 
